@@ -1,6 +1,7 @@
 package com.uepb.project.anotaJa.infra.security;
 
 import com.uepb.project.anotaJa.domain.user.User;
+import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
 import io.jsonwebtoken.SignatureAlgorithm;
@@ -19,16 +20,32 @@ public class JwtService {
     @Value("${jwt.expiration}")
     private long expiration;
 
-    public String generateToken(User user) {
 
-        Key key = Keys.hmacShaKeyFor(secret.getBytes());
+    private Key getKey() {
+        return Keys.hmacShaKeyFor(secret.getBytes());
+    }
+
+
+    public String generateToken(User user) {
 
         return Jwts.builder()
                 .setSubject(user.getId())
                 .claim("email", user.getEmail())
                 .setIssuedAt(new Date())
                 .setExpiration(new Date(System.currentTimeMillis() + expiration))
-                .signWith(key, SignatureAlgorithm.HS256)
+                .signWith(getKey(), SignatureAlgorithm.HS256)
                 .compact();
+    }
+
+
+    public String validateToken(String token) {
+
+        Claims claims = Jwts.parserBuilder()
+                .setSigningKey(getKey())
+                .build()
+                .parseClaimsJws(token)
+                .getBody();
+
+        return claims.getSubject();
     }
 }
