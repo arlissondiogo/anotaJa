@@ -1,6 +1,6 @@
-import { FaUser, FaLock } from "react-icons/fa"
+import { FaUser, FaLock, FaEye, FaEyeSlash } from "react-icons/fa"
 import { useState } from "react"
-import { Link } from "react-router-dom"
+import { Link, useNavigate } from "react-router-dom"
 import "./Login.css"
 import logo from "../../assets/logo.png"
 
@@ -9,6 +9,9 @@ const Login = () => {
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [message, setMessage] = useState("")
+  const [showPassword, setShowPassword] = useState(false)
+
+  const navigate = useNavigate()
 
   const handleSubmit = async (event) => {
     event.preventDefault()
@@ -37,6 +40,9 @@ const Login = () => {
 
       setMessage("Login realizado com sucesso!")
 
+      // redireciona para home e remove login do histórico
+      navigate("/home", { replace: true })
+
     } catch (error) {
       console.error("Erro:", error)
       setMessage("Email ou senha incorretos.")
@@ -64,13 +70,26 @@ const Login = () => {
 
           <div className="input-field">
             <input
-              type="password"
+              type={showPassword ? "text" : "password"}
               required
               placeholder="Digite sua senha"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
             />
-            <FaLock className="icons" />
+
+            {showPassword ? (
+              <FaEyeSlash
+                className="icons"
+                onClick={() => setShowPassword(false)}
+                style={{ cursor: "pointer" }}
+              />
+            ) : (
+              <FaEye
+                className="icons"
+                onClick={() => setShowPassword(true)}
+                style={{ cursor: "pointer" }}
+              />
+            )}
           </div>
 
           <button type="submit">Entrar</button>
