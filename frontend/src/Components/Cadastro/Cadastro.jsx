@@ -1,6 +1,6 @@
-import { FaUser, FaLock, FaIdCard, FaShopify } from "react-icons/fa";
+import { FaUser, FaLock, FaIdCard, FaShopify, FaEye, FaEyeSlash } from "react-icons/fa";
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import "./Cadastro.css";
 import logo from "../../assets/logo.png";
 
@@ -10,6 +10,9 @@ const Cadastro = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [message, setMessage] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+
+  const navigate = useNavigate();
 
   const handleSubmit = async (event) => {
     event.preventDefault();
@@ -44,6 +47,11 @@ const Cadastro = () => {
       setPassword("");
 
       console.log("Resposta do servidor:", data);
+
+      setTimeout(() => {
+        navigate("/");
+      }, 1500);
+
     } catch (error) {
       console.error("Erro:", error);
       setMessage("Erro ao cadastrar usuário.");
@@ -53,6 +61,7 @@ const Cadastro = () => {
   return (
     <div className="page">
       <img className="logo" src={logo} alt="Logo" />
+
       <div className="container">
         <form onSubmit={handleSubmit}>
           <h1>Cadastre-se aqui</h1>
@@ -93,12 +102,25 @@ const Cadastro = () => {
           <div className="input-field">
             <input
               required
-              type="password"
+              type={showPassword ? "text" : "password"}
               placeholder="Crie uma senha"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
             />
-            <FaLock className="icons" />
+
+            {showPassword ? (
+              <FaEyeSlash
+                className="icons"
+                onClick={() => setShowPassword(false)}
+                style={{ cursor: "pointer" }}
+              />
+            ) : (
+              <FaEye
+                className="icons"
+                onClick={() => setShowPassword(true)}
+                style={{ cursor: "pointer" }}
+              />
+            )}
           </div>
 
           <button type="submit">Registrar</button>
