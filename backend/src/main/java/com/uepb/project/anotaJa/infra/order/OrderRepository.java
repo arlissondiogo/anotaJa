@@ -9,4 +9,6 @@ public interface OrderRepository extends MongoRepository<Order, String> {
 
     Optional<Order> findByTableId(String tableId);
 
+    Optional<Order> findByTableIdAndPaidFalseAndCanceledFalse(String tableId);
+
 }

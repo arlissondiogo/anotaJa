@@ -79,4 +79,16 @@ public class TableController {
         repository.deleteById(id);
     }
 
+    @PostMapping("/{id}/open-delivery")
+    public Table openDelivery(
+            @PathVariable String id,
+            @RequestParam String clientName){
+
+        Table table = repository.findById(id).orElseThrow();
+
+        table.setClientName(clientName);
+        table.setStatus(TableStatus.DELIVERY);
+
+        return repository.save(table);
+    }
 }
