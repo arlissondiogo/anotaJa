@@ -1,110 +1,149 @@
-import { FaUser, FaLock, FaEye, FaEyeSlash } from "react-icons/fa"
-import { useState } from "react"
-import { Link, useNavigate } from "react-router-dom"
-import "./Login.css"
-import logo from "../../assets/logo.png"
+import { useState } from 'react'
+import { login, registerUser } from '../../services/api.js'
+import '../Login/Login.css'
 
-const Login = () => {
+export default function LoginPage({ onLogin }) {
+  const [tab, setTab] = useState('login')
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState('')
+  const [success, setSuccess] = useState('')
+  const [form, setForm] = useState({
+    email: '',
+    password: '',
+    ownerName: '',
+    businessName: '',
+  })
 
-  const [email, setEmail] = useState("")
-  const [password, setPassword] = useState("")
-  const [message, setMessage] = useState("")
-  const [showPassword, setShowPassword] = useState(false)
+  const update = (field) => (e) =>
+    setForm(prev => ({ ...prev, [field]: e.target.value }))
 
-  const navigate = useNavigate()
-
-  const handleSubmit = async (event) => {
-    event.preventDefault()
-
-    const loginData = {
-      email,
-      password
-    }
+  const handleSubmit = async () => {
+    setLoading(true)
+    setError('')
+    setSuccess('')
 
     try {
-      const response = await fetch("http://localhost:8080/auth/login", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify(loginData)
-      })
+      if (tab === 'login') {
+        const data = await login(form.email, form.password)
 
-      if (!response.ok) {
-        throw new Error("Credenciais inválidas")
+        localStorage.setItem('token', data.token)
+
+        // chama a função enviada pelo App
+        onLogin?.()
+
+      } else {
+        await registerUser(form)
+
+        setSuccess('Conta criada! Faça login.')
+        setTab('login')
       }
+    } catch (e) {
+      setError(e.message)
+    } finally {
+      setLoading(false)
+    }
+  }
 
-      const data = await response.json()
-
-      console.log("Login realizado:", data)
-
-      setMessage("Login realizado com sucesso!")
-
-      // redireciona para home e remove login do histórico
-      navigate("/home", { replace: true })
-
-    } catch (error) {
-      console.error("Erro:", error)
-      setMessage("Email ou senha incorretos.")
+  const handleKey = (e) => {
+    if (e.key === 'Enter') {
+      handleSubmit()
     }
   }
 
   return (
-    <div className="page">
-      <img className="logo" src={logo} alt="Logo" />
+    <div className="login-page">
+      <div className="login-card">
 
-      <div className="container">
-        <form onSubmit={handleSubmit}>
-          <h1>Entrar</h1>
+        <div className="login-card__logo">
+          <span>🍽️</span>
+          <span>
+            Anota<span className="logo-accent">Já</span>
+          </span>
+        </div>
 
-          <div className="input-field">
-            <input
-              type="email"
-              required
-              placeholder="Digite seu e-mail"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-            />
-            <FaUser className="icons" />
-          </div>
+        <p className="login-card__tagline">
+          Sistema de gestão de restaurante
+        </p>
 
-          <div className="input-field">
-            <input
-              type={showPassword ? "text" : "password"}
-              required
-              placeholder="Digite sua senha"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-            />
+        <div className="login-tabs">
+          <button
+            className={`login-tab ${tab === 'login' ? 'login-tab--active' : ''}`}
+            onClick={() => setTab('login')}
+          >
+            Entrar
+          </button>
 
-            {showPassword ? (
-              <FaEyeSlash
-                className="icons"
-                onClick={() => setShowPassword(false)}
-                style={{ cursor: "pointer" }}
+          <button
+            className={`login-tab ${tab === 'register' ? 'login-tab--active' : ''}`}
+            onClick={() => setTab('register')}
+          >
+            Cadastrar
+          </button>
+        </div>
+
+        <div className="login-form">
+
+          {tab === 'register' && (
+            <>
+              <input
+                className="login-input"
+                placeholder="Seu nome"
+                value={form.ownerName}
+                onChange={update('ownerName')}
               />
-            ) : (
-              <FaEye
-                className="icons"
-                onClick={() => setShowPassword(true)}
-                style={{ cursor: "pointer" }}
+
+              <input
+                className="login-input"
+                placeholder="Nome do negócio"
+                value={form.businessName}
+                onChange={update('businessName')}
               />
-            )}
-          </div>
+            </>
+          )}
 
-          <button type="submit">Entrar</button>
+          <input
+            className="login-input"
+            placeholder="Email"
+            type="email"
+            value={form.email}
+            onChange={update('email')}
+          />
 
-          <Link to="/cadastro">
-            <button type="button" className="register-button">
-              Criar conta
-            </button>
-          </Link>
+          <input
+            className="login-input"
+            placeholder="Senha"
+            type="password"
+            value={form.password}
+            onChange={update('password')}
+            onKeyDown={handleKey}
+          />
 
-          {message && <p className="message">{message}</p>}
-        </form>
+          {error && (
+            <p className="login-msg login-msg--error">
+              {error}
+            </p>
+          )}
+
+          {success && (
+            <p className="login-msg login-msg--success">
+              {success}
+            </p>
+          )}
+
+          <button
+            className="login-submit"
+            onClick={handleSubmit}
+            disabled={loading}
+          >
+            {loading
+              ? 'Aguarde...'
+              : tab === 'login'
+                ? 'Entrar'
+                : 'Criar conta'}
+          </button>
+
+        </div>
       </div>
     </div>
   )
 }
-
-export default Login
