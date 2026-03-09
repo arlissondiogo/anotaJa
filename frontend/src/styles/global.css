@@ -1,0 +1,34 @@
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: "Nunito", "Segoe UI", sans-serif;
+  background-color: #f5f0e8;
+  color: #222;
+  min-height: 100vh;
+}
+
+button {
+  font-family: "Nunito", "Segoe UI", sans-serif;
+  cursor: pointer;
+}
+
+input {
+  font-family: "Nunito", "Segoe UI", sans-serif;
+}
+
+::-webkit-scrollbar {
+  width: 6px;
+}
+::-webkit-scrollbar-track {
+  background: #f1f1f1;
+}
+::-webkit-scrollbar-thumb {
+  background: #e8c547;
+  border-radius: 3px;
+}
