@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { login, registerUser } from "../../services/api.js";
-import "../Login/Login.css";
+import "./Login.css";
 
 export default function LoginPage({ onLogin }) {
   const [tab, setTab] = useState("login");

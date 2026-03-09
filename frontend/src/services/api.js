@@ -7,7 +7,6 @@ const authHeaders = () => ({
   Authorization: `Bearer ${getToken()}`,
 });
 
-// ── AUTH ──────────────────────────────────────
 export async function login(email, password) {
   const res = await fetch(`${BASE_URL}/auth/login`, {
     method: "POST",
@@ -28,7 +27,6 @@ export async function registerUser(data) {
   return res.json();
 }
 
-// ── TABLES ────────────────────────────────────
 export async function getTables() {
   const res = await fetch(`${BASE_URL}/tables`, { headers: authHeaders() });
   if (!res.ok) throw new Error("Erro ao buscar mesas");
@@ -74,7 +72,6 @@ export async function deleteTable(id) {
   if (!res.ok) throw new Error("Erro ao excluir mesa");
 }
 
-// ── PRODUCTS ──────────────────────────────────
 export async function getProducts() {
   const res = await fetch(`${BASE_URL}/products`, { headers: authHeaders() });
   if (!res.ok) throw new Error("Erro ao buscar produtos");
@@ -109,7 +106,6 @@ export async function deleteProduct(id) {
   if (!res.ok) throw new Error("Erro ao excluir produto");
 }
 
-// ── ORDERS ────────────────────────────────────
 export async function getOrderByTable(tableId) {
   const res = await fetch(`${BASE_URL}/orders/table/${tableId}`, {
     headers: authHeaders(),
