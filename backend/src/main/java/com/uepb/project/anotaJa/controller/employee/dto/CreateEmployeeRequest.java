@@ -6,6 +6,5 @@ public record CreateEmployeeRequest(
         String name,
         String email,
         String password,
-        Role role,
-        String ownerId
+        Role role
 ) {}

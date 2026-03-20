@@ -18,15 +18,10 @@ public class Order {
     private String id;
 
     private String tableId;
-
     private String clientName;
-
     private List<OrderItem> items;
-
     private Double total;
-
     private Boolean paid;
-
     private Boolean canceled;
-
+    private String ownerId;
 }

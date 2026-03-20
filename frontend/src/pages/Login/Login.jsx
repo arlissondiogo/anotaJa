@@ -15,7 +15,7 @@ export default function LoginPage({ onLogin }) {
   });
 
   const update = (field) => (e) =>
-    setForm((prev) => ({ ...prev, [field]: e.target.value }));
+      setForm((prev) => ({ ...prev, [field]: e.target.value }));
 
   const handleSubmit = async () => {
     setLoading(true);
@@ -26,7 +26,7 @@ export default function LoginPage({ onLogin }) {
       if (tab === "login") {
         const data = await login(form.email, form.password);
 
-        localStorage.setItem("token", data.token);
+        sessionStorage.setItem("token", data.token); // ← corrigido
 
         onLogin?.();
       } else {
@@ -49,86 +49,86 @@ export default function LoginPage({ onLogin }) {
   };
 
   return (
-    <div className="login-page">
-      <div className="login-card">
-        <div className="login-card__logo">
-          <span>🍽️</span>
-          <span>
+      <div className="login-page">
+        <div className="login-card">
+          <div className="login-card__logo">
+            <span>🍽️</span>
+            <span>
             Anota<span className="logo-accent">Já</span>
           </span>
-        </div>
+          </div>
 
-        <p className="login-card__tagline">Sistema de gestão de restaurante</p>
+          <p className="login-card__tagline">Sistema de gestão de restaurante</p>
 
-        <div className="login-tabs">
-          <button
-            className={`login-tab ${tab === "login" ? "login-tab--active" : ""}`}
-            onClick={() => setTab("login")}
-          >
-            Entrar
-          </button>
+          <div className="login-tabs">
+            <button
+                className={`login-tab ${tab === "login" ? "login-tab--active" : ""}`}
+                onClick={() => setTab("login")}
+            >
+              Entrar
+            </button>
 
-          <button
-            className={`login-tab ${tab === "register" ? "login-tab--active" : ""}`}
-            onClick={() => setTab("register")}
-          >
-            Cadastrar
-          </button>
-        </div>
+            <button
+                className={`login-tab ${tab === "register" ? "login-tab--active" : ""}`}
+                onClick={() => setTab("register")}
+            >
+              Cadastrar
+            </button>
+          </div>
 
-        <div className="login-form">
-          {tab === "register" && (
-            <>
-              <input
+          <div className="login-form">
+            {tab === "register" && (
+                <>
+                  <input
+                      className="login-input"
+                      placeholder="Seu nome"
+                      value={form.ownerName}
+                      onChange={update("ownerName")}
+                  />
+
+                  <input
+                      className="login-input"
+                      placeholder="Nome do negócio"
+                      value={form.businessName}
+                      onChange={update("businessName")}
+                  />
+                </>
+            )}
+
+            <input
                 className="login-input"
-                placeholder="Seu nome"
-                value={form.ownerName}
-                onChange={update("ownerName")}
-              />
+                placeholder="Email"
+                type="email"
+                value={form.email}
+                onChange={update("email")}
+            />
 
-              <input
+            <input
                 className="login-input"
-                placeholder="Nome do negócio"
-                value={form.businessName}
-                onChange={update("businessName")}
-              />
-            </>
-          )}
+                placeholder="Senha"
+                type="password"
+                value={form.password}
+                onChange={update("password")}
+                onKeyDown={handleKey}
+            />
 
-          <input
-            className="login-input"
-            placeholder="Email"
-            type="email"
-            value={form.email}
-            onChange={update("email")}
-          />
+            {error && <p className="login-msg login-msg--error">{error}</p>}
 
-          <input
-            className="login-input"
-            placeholder="Senha"
-            type="password"
-            value={form.password}
-            onChange={update("password")}
-            onKeyDown={handleKey}
-          />
+            {success && <p className="login-msg login-msg--success">{success}</p>}
 
-          {error && <p className="login-msg login-msg--error">{error}</p>}
-
-          {success && <p className="login-msg login-msg--success">{success}</p>}
-
-          <button
-            className="login-submit"
-            onClick={handleSubmit}
-            disabled={loading}
-          >
-            {loading
-              ? "Aguarde..."
-              : tab === "login"
-                ? "Entrar"
-                : "Criar conta"}
-          </button>
+            <button
+                className="login-submit"
+                onClick={handleSubmit}
+                disabled={loading}
+            >
+              {loading
+                  ? "Aguarde..."
+                  : tab === "login"
+                      ? "Entrar"
+                      : "Criar conta"}
+            </button>
+          </div>
         </div>
       </div>
-    </div>
   );
 }

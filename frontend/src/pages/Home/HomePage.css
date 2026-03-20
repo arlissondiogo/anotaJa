@@ -239,3 +239,31 @@
   opacity: 0.9;
   transform: scale(1.08);
 }
+.merge-table-fab {
+  position: fixed;
+  bottom: 18px;
+  right: 142px;
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  border: none;
+  background: #7c6af5;
+  color: #fff;
+  font-size: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 16px rgba(124, 106, 245, 0.4);
+  transition: transform 0.15s, opacity 0.15s;
+}
+.merge-table-fab:hover {
+  opacity: 0.9;
+  transform: scale(1.08);
+}
+.modal-label {
+  font-size: 12px;
+  font-weight: 700;
+  color: #888;
+  margin-bottom: 4px;
+  display: block;
+}

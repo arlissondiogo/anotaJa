@@ -31,7 +31,12 @@ public class MongoUserRepository implements UserRepository {
     @Override
     public Optional<User> findByEmail(String email) {
         return repository.findByEmail(email)
-                .map(UserDocumentMapper::toDomain);
+                .map(doc -> UserDocumentMapper.toDomain(doc));
     }
 
+    @Override
+    public Optional<User> findById(String id) {
+        return repository.findUserDocumentById(id)
+                .map(doc -> UserDocumentMapper.toDomain(doc));
+    }
 }

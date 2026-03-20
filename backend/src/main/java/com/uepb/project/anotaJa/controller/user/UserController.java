@@ -9,6 +9,7 @@ import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 @CrossOrigin(origins = "*")
@@ -26,7 +27,6 @@ public class UserController {
     public ResponseEntity<UserResponse> register(
             @RequestBody @Valid UserRequest request
     ) {
-
         User user = service.register(
                 request.ownerName(),
                 request.businessName(),
@@ -39,17 +39,22 @@ public class UserController {
                 .body(UserResponse.from(user));
     }
 
-    @PreAuthorize("hasRole('OWNER')")
+    @PreAuthorize("hasAnyRole('OWNER', 'MANAGER')")
     @PostMapping("/employee")
     public ResponseEntity<UserResponse> createEmployee(
             @RequestBody CreateEmployeeRequest request
     ) {
+        String ownerId = (String) SecurityContextHolder
+                .getContext()
+                .getAuthentication()
+                .getPrincipal();
 
         User user = service.createEmployee(
                 request.name(),
                 request.email(),
                 request.password(),
-                request.role()
+                request.role(),
+                ownerId
         );
 
         return ResponseEntity
