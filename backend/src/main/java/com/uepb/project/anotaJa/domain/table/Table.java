@@ -16,11 +16,13 @@ public class Table {
     private String id;
 
     private Integer number;
-
     private String clientName;
-
     private TableStatus status;
-
     private String ownerId;
 
+    private String address;
+    private String phone;
+    private Double fee;
+    private String notes;
+    private String deliveryStatus;
 }

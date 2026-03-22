@@ -16,6 +16,7 @@ import {
   payOrder,
   cancelOrder,
   mergeTables,
+  updateDeliveryStatus,
 } from "../../services/api";
 
 import "./HomePage.css";
@@ -45,13 +46,11 @@ export default function HomePage({ activeTab, setActiveTab }) {
   const [mergeSource, setMergeSource] = useState("");
   const [mergeTarget, setMergeTarget] = useState("");
 
-  // Delivery extra fields
   const [deliveryAddress, setDeliveryAddress] = useState("");
   const [deliveryPhone, setDeliveryPhone] = useState("");
   const [deliveryFee, setDeliveryFee] = useState("");
   const [deliveryNotes, setDeliveryNotes] = useState("");
   const [deliveryStatus, setDeliveryStatus] = useState("WAITING");
-  // For editing delivery status/info in order modal
   const [deliveryStatusEdit, setDeliveryStatusEdit] = useState("WAITING");
 
   const [clientName, setClientName] = useState("");
@@ -79,18 +78,14 @@ export default function HomePage({ activeTab, setActiveTab }) {
       setClientName("");
       setActiveTab("IN_PROGRESS");
       loadAll();
-    } catch (err) {
-      alert(err.message);
-    } finally {
-      setLoading(false);
-    }
+    } catch (err) { alert(err.message); }
+    finally { setLoading(false); }
   };
 
   const handleAddTable = async () => {
     const num = parseInt(newTableNum);
     if (!num) return;
-    const tableExists = tables.some((t) => t.number === num);
-    if (tableExists) {
+    if (tables.some((t) => t.number === num)) {
       alert("Já existe uma mesa com esse número.");
       return;
     }
@@ -100,11 +95,8 @@ export default function HomePage({ activeTab, setActiveTab }) {
       setAddTableModal(false);
       setNewTableNum("");
       loadAll();
-    } catch (err) {
-      alert(err.message);
-    } finally {
-      setLoading(false);
-    }
+    } catch (err) { alert(err.message); }
+    finally { setLoading(false); }
   };
 
   const resetDeliveryFields = () => {
@@ -133,11 +125,8 @@ export default function HomePage({ activeTab, setActiveTab }) {
       resetDeliveryFields();
       setActiveTab("DELIVERY");
       loadAll();
-    } catch (err) {
-      alert(err.message);
-    } finally {
-      setLoading(false);
-    }
+    } catch (err) { alert(err.message); }
+    finally { setLoading(false); }
   };
 
   const handleTableClick = async (table) => {
@@ -147,14 +136,11 @@ export default function HomePage({ activeTab, setActiveTab }) {
     }
     try {
       const order = await getOrderByTable(table.id);
-      // Pre-fill delivery status edit if it's a delivery
       if (table.status === "DELIVERY") {
         setDeliveryStatusEdit(table.deliveryStatus || "WAITING");
       }
       setOrderModal({ order, table });
-    } catch (err) {
-      alert(err.message);
-    }
+    } catch (err) { alert(err.message); }
   };
 
   const handlePay = async (orderId, table) => {
@@ -164,16 +150,9 @@ export default function HomePage({ activeTab, setActiveTab }) {
       await closeTable(table.id);
       setOrderModal(null);
       setFeedbackModal("pago");
-      setTimeout(() => {
-        setFeedbackModal(null);
-        setActiveTab("AVAILABLE");
-        loadAll();
-      }, 2000);
-    } catch (err) {
-      alert(err.message);
-    } finally {
-      setLoading(false);
-    }
+      setTimeout(() => { setFeedbackModal(null); setActiveTab("AVAILABLE"); loadAll(); }, 2000);
+    } catch (err) { alert(err.message); }
+    finally { setLoading(false); }
   };
 
   const handleFreeTable = async (tableId) => {
@@ -183,11 +162,8 @@ export default function HomePage({ activeTab, setActiveTab }) {
       setOrderModal(null);
       setActiveTab("AVAILABLE");
       loadAll();
-    } catch (err) {
-      alert(err.message);
-    } finally {
-      setLoading(false);
-    }
+    } catch (err) { alert(err.message); }
+    finally { setLoading(false); }
   };
 
   const handleCancelConfirmed = async () => {
@@ -198,25 +174,14 @@ export default function HomePage({ activeTab, setActiveTab }) {
       setCancelConfirm(null);
       setOrderModal(null);
       setFeedbackModal("cancelado");
-      setTimeout(() => {
-        setFeedbackModal(null);
-        setActiveTab("AVAILABLE");
-        loadAll();
-      }, 2000);
-    } catch (err) {
-      alert(err.message);
-    } finally {
-      setLoading(false);
-    }
+      setTimeout(() => { setFeedbackModal(null); setActiveTab("AVAILABLE"); loadAll(); }, 2000);
+    } catch (err) { alert(err.message); }
+    finally { setLoading(false); }
   };
 
   const handleDeleteConfirmed = async () => {
     if (!deleteConfirm) return;
-    try {
-      await deleteTable(deleteConfirm.id);
-    } catch (err) {
-      alert(err.message);
-    }
+    try { await deleteTable(deleteConfirm.id); } catch (err) { alert(err.message); }
     setDeleteConfirm(null);
     setOrderModal(null);
     loadAll();
@@ -231,48 +196,29 @@ export default function HomePage({ activeTab, setActiveTab }) {
       setMergeSource("");
       setMergeTarget("");
       setFeedbackModal("mesclado");
-      setTimeout(() => {
-        setFeedbackModal(null);
-        loadAll();
-      }, 2000);
-    } catch (err) {
-      alert(err.message);
-    } finally {
-      setLoading(false);
-    }
+      setTimeout(() => { setFeedbackModal(null); loadAll(); }, 2000);
+    } catch (err) { alert(err.message); }
+    finally { setLoading(false); }
   };
 
-  const handleUpdateDeliveryStatus = async () => {
+  const handleUpdateDeliveryStatus = async (status) => {
     if (!orderModal) return;
     setLoading(true);
     try {
-      await updateOrder(orderModal.order?.id, {
-        items: orderModal.order?.items,
-        total: orderModal.order?.total,
-        deliveryStatus: deliveryStatusEdit,
-      });
-      setOrderModal((prev) => ({
-        ...prev,
-        table: { ...prev.table, deliveryStatus: deliveryStatusEdit },
-      }));
+      const updatedTable = await updateDeliveryStatus(orderModal.table.id, status);
+      setOrderModal((prev) => ({ ...prev, table: updatedTable }));
+      setDeliveryStatusEdit(status);
       setFeedbackModal("status");
       setTimeout(() => setFeedbackModal(null), 2000);
       loadAll();
-    } catch (err) {
-      alert(err.message);
-    } finally {
-      setLoading(false);
-    }
+    } catch (err) { alert(err.message); }
+    finally { setLoading(false); }
   };
 
   const addToCart = (product) => {
     setCart((prev) => {
       const existing = prev.find((c) => c.product.id === product.id);
-      if (existing) {
-        return prev.map((c) =>
-            c.product.id === product.id ? { ...c, qty: c.qty + 1 } : c
-        );
-      }
+      if (existing) return prev.map((c) => c.product.id === product.id ? { ...c, qty: c.qty + 1 } : c);
       return [...prev, { product, qty: 1 }];
     });
   };
@@ -282,9 +228,7 @@ export default function HomePage({ activeTab, setActiveTab }) {
       const existing = prev.find((c) => c.product.id === productId);
       if (!existing) return prev;
       if (existing.qty === 1) return prev.filter((c) => c.product.id !== productId);
-      return prev.map((c) =>
-          c.product.id === productId ? { ...c, qty: c.qty - 1 } : c
-      );
+      return prev.map((c) => c.product.id === productId ? { ...c, qty: c.qty - 1 } : c);
     });
   };
 
@@ -297,37 +241,22 @@ export default function HomePage({ activeTab, setActiveTab }) {
     setLoading(true);
     try {
       const items = cart.map((c) => ({
-        productId: c.product.id,
-        name: c.product.name,
-        price: c.product.price,
-        quantity: c.qty,
+        productId: c.product.id, name: c.product.name,
+        price: c.product.price, quantity: c.qty,
       }));
-      await createOrder({
-        tableId: menuModal.id,
-        clientName: menuModal.clientName,
-        items,
-        total: cartTotal,
-      });
+      await createOrder({ tableId: menuModal.id, clientName: menuModal.clientName, items, total: cartTotal });
       setMenuModal(null);
       setCart([]);
       setFeedbackModal("pedido");
-      setTimeout(() => {
-        setFeedbackModal(null);
-        loadAll();
-      }, 2000);
-    } catch (err) {
-      alert(err.message);
-    } finally {
-      setLoading(false);
-    }
+      setTimeout(() => { setFeedbackModal(null); loadAll(); }, 2000);
+    } catch (err) { alert(err.message); }
+    finally { setLoading(false); }
   };
 
   const handleOpenEdit = (order, table) => {
     const preCart = order.items.map((item) => {
       const product = products.find((p) => p.id === item.productId) || {
-        id: item.productId,
-        name: item.name,
-        price: item.price,
+        id: item.productId, name: item.name, price: item.price,
       };
       return { product, qty: item.quantity };
     });
@@ -341,24 +270,16 @@ export default function HomePage({ activeTab, setActiveTab }) {
     setLoading(true);
     try {
       const items = cart.map((c) => ({
-        productId: c.product.id,
-        name: c.product.name,
-        price: c.product.price,
-        quantity: c.qty,
+        productId: c.product.id, name: c.product.name,
+        price: c.product.price, quantity: c.qty,
       }));
       await updateOrder(editModal.order.id, { items, total: cartTotal });
       setEditModal(null);
       setCart([]);
       setFeedbackModal("editado");
-      setTimeout(() => {
-        setFeedbackModal(null);
-        loadAll();
-      }, 2000);
-    } catch (err) {
-      alert(err.message);
-    } finally {
-      setLoading(false);
-    }
+      setTimeout(() => { setFeedbackModal(null); loadAll(); }, 2000);
+    } catch (err) { alert(err.message); }
+    finally { setLoading(false); }
   };
 
   const isDelivery = (table) => table.status === "DELIVERY";
@@ -369,66 +290,31 @@ export default function HomePage({ activeTab, setActiveTab }) {
           {filtered.map((table) => (
               <div key={table.id} className="table-wrapper">
                 {isDelivery(table) ? (
-                    <DeliveryIcon
-                        status={table.status}
-                        clientName={table.clientName}
-                        number={table.number}
-                        onClick={() => handleTableClick(table)}
-                    />
+                    <DeliveryIcon status={table.status} clientName={table.clientName} number={table.number} onClick={() => handleTableClick(table)} />
                 ) : (
-                    <TableIcon
-                        status={table.status}
-                        clientName={table.clientName}
-                        number={table.number}
-                        onClick={() => handleTableClick(table)}
-                    />
+                    <TableIcon status={table.status} clientName={table.clientName} number={table.number} onClick={() => handleTableClick(table)} />
                 )}
                 {table.status === "AVAILABLE" && (
-                    <button
-                        className="delete-table-btn"
-                        title="Excluir mesa"
-                        onClick={(e) => { e.stopPropagation(); setDeleteConfirm(table); }}
-                    >
-                      🗑
-                    </button>
+                    <button className="delete-table-btn" title="Excluir mesa"
+                            onClick={(e) => { e.stopPropagation(); setDeleteConfirm(table); }}>🗑</button>
                 )}
               </div>
           ))}
-          {filtered.length === 0 && (
-              <p className="tables-empty">Nenhuma mesa nesta categoria.</p>
-          )}
+          {filtered.length === 0 && <p className="tables-empty">Nenhuma mesa nesta categoria.</p>}
         </div>
 
-        <div className="tables-badge">
-          {filtered.length}/{tables.length} mesas
-        </div>
+        <div className="tables-badge">{filtered.length}/{tables.length} mesas</div>
 
-        <button className="add-delivery-fab" onClick={() => setAddDeliveryModal(true)} title="Novo delivery">
-          🛵
-        </button>
+        <button className="add-delivery-fab" onClick={() => setAddDeliveryModal(true)} title="Novo delivery">🛵</button>
+        <button className="merge-table-fab" onClick={() => setMergeModal(true)} title="Mesclar mesas">⇄</button>
+        <button className="add-table-fab" onClick={() => setAddTableModal(true)} title="Adicionar mesa">+</button>
 
-        <button className="merge-table-fab" onClick={() => setMergeModal(true)} title="Mesclar mesas">
-          ⇄
-        </button>
-
-        <button className="add-table-fab" onClick={() => setAddTableModal(true)} title="Adicionar mesa">
-          +
-        </button>
-
-        {/* Modal: Adicionar Mesa */}
         {addTableModal && (
             <Modal onClose={() => { setAddTableModal(false); setNewTableNum(""); }}>
               <p className="modal-title">Adicionar Mesa</p>
               <p className="modal-subtitle">Informe o número da mesa</p>
-              <input
-                  className="modal-input"
-                  placeholder="Número da mesa"
-                  type="number"
-                  value={newTableNum}
-                  onChange={(e) => setNewTableNum(e.target.value)}
-                  onKeyDown={(e) => e.key === "Enter" && handleAddTable()}
-                  autoFocus
-              />
+              <input className="modal-input" placeholder="Número da mesa" type="number" value={newTableNum}
+                     onChange={(e) => setNewTableNum(e.target.value)} onKeyDown={(e) => e.key === "Enter" && handleAddTable()} autoFocus />
               <div className="modal-actions">
                 <button className="btn btn--gray btn--md" onClick={() => { setAddTableModal(false); setNewTableNum(""); }}>Cancelar</button>
                 <button className="btn btn--primary btn--md" onClick={handleAddTable} disabled={loading}>{loading ? "..." : "Adicionar"}</button>
@@ -436,72 +322,33 @@ export default function HomePage({ activeTab, setActiveTab }) {
             </Modal>
         )}
 
-        
         {addDeliveryModal && (
             <Modal onClose={() => { setAddDeliveryModal(false); resetDeliveryFields(); }}>
               <p className="modal-title">🛵 Novo Delivery</p>
               <p className="modal-subtitle">Preencha os dados do pedido</p>
-
               <label className="modal-label">Nome do cliente *</label>
-              <input
-                  className="modal-input"
-                  placeholder="Nome do cliente"
-                  value={deliveryClientName}
-                  onChange={(e) => setDeliveryClientName(e.target.value)}
-                  autoFocus
-              />
-
+              <input className="modal-input" placeholder="Nome do cliente" value={deliveryClientName}
+                     onChange={(e) => setDeliveryClientName(e.target.value)} autoFocus />
               <label className="modal-label" style={{ marginTop: 10 }}>Telefone</label>
-              <input
-                  className="modal-input"
-                  placeholder="(00) 00000-0000"
-                  type="tel"
-                  value={deliveryPhone}
-                  onChange={(e) => setDeliveryPhone(e.target.value)}
-              />
-
+              <input className="modal-input" placeholder="(00) 00000-0000" type="tel" value={deliveryPhone}
+                     onChange={(e) => setDeliveryPhone(e.target.value)} />
               <label className="modal-label" style={{ marginTop: 10 }}>Endereço de entrega</label>
-              <input
-                  className="modal-input"
-                  placeholder="Rua, número, bairro..."
-                  value={deliveryAddress}
-                  onChange={(e) => setDeliveryAddress(e.target.value)}
-              />
-
+              <input className="modal-input" placeholder="Rua, número, bairro..." value={deliveryAddress}
+                     onChange={(e) => setDeliveryAddress(e.target.value)} />
               <label className="modal-label" style={{ marginTop: 10 }}>Taxa de entrega (R$)</label>
-              <input
-                  className="modal-input"
-                  placeholder="0,00"
-                  type="number"
-                  min="0"
-                  step="0.01"
-                  value={deliveryFee}
-                  onChange={(e) => setDeliveryFee(e.target.value)}
-              />
-
+              <input className="modal-input" placeholder="0,00" type="number" min="0" step="0.01"
+                     value={deliveryFee} onChange={(e) => setDeliveryFee(e.target.value)} />
               <label className="modal-label" style={{ marginTop: 10 }}>Status do delivery</label>
               <div className="delivery-status-group">
                 {Object.entries(DELIVERY_STATUS_LABELS).map(([key, label]) => (
-                    <button
-                        key={key}
-                        type="button"
-                        className={`delivery-status-btn${deliveryStatus === key ? " delivery-status-btn--active" : ""}`}
-                        onClick={() => setDeliveryStatus(key)}
-                    >
-                      {label}
-                    </button>
+                    <button key={key} type="button"
+                            className={`delivery-status-btn${deliveryStatus === key ? " delivery-status-btn--active" : ""}`}
+                            onClick={() => setDeliveryStatus(key)}>{label}</button>
                 ))}
               </div>
-
               <label className="modal-label" style={{ marginTop: 10 }}>Observações</label>
-              <textarea
-                  className="modal-input modal-textarea"
-                  placeholder="Sem cebola, alergia a amendoim..."
-                  value={deliveryNotes}
-                  onChange={(e) => setDeliveryNotes(e.target.value)}
-                  rows={3}
-              />
-
+              <textarea className="modal-input modal-textarea" placeholder="Sem cebola, alergia a amendoim..."
+                        value={deliveryNotes} onChange={(e) => setDeliveryNotes(e.target.value)} rows={3} />
               <div className="modal-actions">
                 <button className="btn btn--gray btn--md" onClick={() => { setAddDeliveryModal(false); resetDeliveryFields(); }}>Cancelar</button>
                 <button className="btn btn--primary btn--md" onClick={handleAddDelivery} disabled={loading}>{loading ? "..." : "Criar delivery"}</button>
@@ -509,19 +356,12 @@ export default function HomePage({ activeTab, setActiveTab }) {
             </Modal>
         )}
 
-        
         {openTableModal && (
             <Modal onClose={() => { setOpenTableModal(null); setClientName(""); }}>
               <p className="modal-title">Abrir Mesa {openTableModal.number}</p>
               <p className="modal-subtitle">Informe o nome do cliente</p>
-              <input
-                  className="modal-input"
-                  placeholder="Nome do cliente"
-                  value={clientName}
-                  onChange={(e) => setClientName(e.target.value)}
-                  onKeyDown={(e) => e.key === "Enter" && handleOpenTable()}
-                  autoFocus
-              />
+              <input className="modal-input" placeholder="Nome do cliente" value={clientName}
+                     onChange={(e) => setClientName(e.target.value)} onKeyDown={(e) => e.key === "Enter" && handleOpenTable()} autoFocus />
               <div className="modal-actions">
                 <button className="btn btn--gray btn--md" onClick={() => setOpenTableModal(null)}>Cancelar</button>
                 <button className="btn btn--primary btn--md" onClick={handleOpenTable} disabled={loading}>{loading ? "..." : "Abrir mesa"}</button>
@@ -529,58 +369,32 @@ export default function HomePage({ activeTab, setActiveTab }) {
             </Modal>
         )}
 
-        {/* Modal: Mesclar Mesas */}
         {mergeModal && (
             <Modal onClose={() => { setMergeModal(false); setMergeSource(""); setMergeTarget(""); }}>
               <p className="modal-title">⇄ Mesclar Mesas</p>
               <p className="modal-subtitle">Os pedidos da mesa origem serão movidos para a mesa destino.</p>
-
               <label className="modal-label">Mesa origem</label>
-              <select
-                  className="modal-input"
-                  value={mergeSource}
-                  onChange={(e) => setMergeSource(e.target.value)}
-              >
+              <select className="modal-input" value={mergeSource} onChange={(e) => setMergeSource(e.target.value)}>
                 <option value="">Selecione...</option>
-                {tables
-                    .filter((t) => t.status === "IN_PROGRESS")
-                    .map((t) => (
-                        <option key={t.id} value={t.id}>
-                          Mesa {t.number} — {t.clientName}
-                        </option>
-                    ))}
+                {tables.filter((t) => t.status === "IN_PROGRESS").map((t) => (
+                    <option key={t.id} value={t.id}>Mesa {t.number} — {t.clientName}</option>
+                ))}
               </select>
-
               <label className="modal-label" style={{ marginTop: 10 }}>Mesa destino</label>
-              <select
-                  className="modal-input"
-                  value={mergeTarget}
-                  onChange={(e) => setMergeTarget(e.target.value)}
-              >
+              <select className="modal-input" value={mergeTarget} onChange={(e) => setMergeTarget(e.target.value)}>
                 <option value="">Selecione...</option>
-                {tables
-                    .filter((t) => t.status === "IN_PROGRESS" && t.id !== mergeSource)
-                    .map((t) => (
-                        <option key={t.id} value={t.id}>
-                          Mesa {t.number} — {t.clientName}
-                        </option>
-                    ))}
+                {tables.filter((t) => t.status === "IN_PROGRESS" && t.id !== mergeSource).map((t) => (
+                    <option key={t.id} value={t.id}>Mesa {t.number} — {t.clientName}</option>
+                ))}
               </select>
-
               <div className="modal-actions">
                 <button className="btn btn--gray btn--md" onClick={() => { setMergeModal(false); setMergeSource(""); setMergeTarget(""); }}>Cancelar</button>
-                <button
-                    className="btn btn--primary btn--md"
-                    onClick={handleMergeTables}
-                    disabled={loading || !mergeSource || !mergeTarget}
-                >
-                  {loading ? "..." : "Mesclar"}
-                </button>
+                <button className="btn btn--primary btn--md" onClick={handleMergeTables}
+                        disabled={loading || !mergeSource || !mergeTarget}>{loading ? "..." : "Mesclar"}</button>
               </div>
             </Modal>
         )}
 
- 
         {orderModal && (
             <Modal onClose={() => setOrderModal(null)}>
               <p className="modal-title">
@@ -588,7 +402,6 @@ export default function HomePage({ activeTab, setActiveTab }) {
               </p>
               <p className="modal-subtitle">Cliente: {orderModal.table.clientName}</p>
 
-              {/* Delivery info block */}
               {isDelivery(orderModal.table) && (
                   <div className="delivery-info-block">
                     {orderModal.table.phone && (
@@ -615,31 +428,16 @@ export default function HomePage({ activeTab, setActiveTab }) {
                           <span className="delivery-info-value">{orderModal.table.notes}</span>
                         </div>
                     )}
-
-                    {/* Status editor */}
                     <div className="delivery-status-editor">
                       <span className="delivery-info-label" style={{ marginBottom: 6, display: "block" }}>Status do delivery</span>
                       <div className="delivery-status-group">
                         {Object.entries(DELIVERY_STATUS_LABELS).map(([key, label]) => (
-                            <button
-                                key={key}
-                                type="button"
-                                className={`delivery-status-btn${deliveryStatusEdit === key ? " delivery-status-btn--active" : ""}`}
-                                onClick={() => setDeliveryStatusEdit(key)}
-                            >
-                              {label}
-                            </button>
+                            <button key={key} type="button"
+                                    className={`delivery-status-btn${deliveryStatusEdit === key ? " delivery-status-btn--active" : ""}`}
+                                    onClick={() => handleUpdateDeliveryStatus(key)}
+                                    disabled={loading}>{label}</button>
                         ))}
                       </div>
-                      {deliveryStatusEdit !== (orderModal.table.deliveryStatus || "WAITING") && (
-                          <button
-                              className="btn btn--primary btn--sm delivery-status-save"
-                              onClick={handleUpdateDeliveryStatus}
-                              disabled={loading}
-                          >
-                            {loading ? "..." : "Salvar status"}
-                          </button>
-                      )}
                     </div>
                   </div>
               )}
@@ -694,12 +492,9 @@ export default function HomePage({ activeTab, setActiveTab }) {
             </Modal>
         )}
 
-
         {menuModal && (
             <Modal onClose={() => { setMenuModal(null); setCart([]); }}>
-              <p className="modal-title">
-                {isDelivery(menuModal) ? "🛵 Cardápio — Delivery" : `Cardápio — Mesa ${menuModal.number}`}
-              </p>
+              <p className="modal-title">{isDelivery(menuModal) ? "🛵 Cardápio — Delivery" : `Cardápio — Mesa ${menuModal.number}`}</p>
               <p className="modal-subtitle">Cliente: {menuModal.clientName}</p>
               <div className="menu-list">
                 {products.map((product) => (
@@ -719,9 +514,7 @@ export default function HomePage({ activeTab, setActiveTab }) {
                     </div>
                 ))}
               </div>
-              {cartCount > 0 && (
-                  <div className="cart-summary">{cartCount} {cartCount === 1 ? "item" : "itens"} · R$ {cartTotal.toFixed(2)}</div>
-              )}
+              {cartCount > 0 && <div className="cart-summary">{cartCount} {cartCount === 1 ? "item" : "itens"} · R$ {cartTotal.toFixed(2)}</div>}
               <div className="modal-actions">
                 <button className="btn btn--gray btn--md" onClick={() => { setMenuModal(null); setCart([]); }}>Cancelar</button>
                 <button className="btn btn--primary btn--md" onClick={handleSubmitOrder} disabled={loading || !cartCount}>{loading ? "..." : "Confirmar pedido"}</button>
@@ -729,12 +522,9 @@ export default function HomePage({ activeTab, setActiveTab }) {
             </Modal>
         )}
 
-   
         {editModal && (
             <Modal onClose={() => { setEditModal(null); setCart([]); }}>
-              <p className="modal-title">
-                {isDelivery(editModal.table) ? "🛵 Editar Pedido — Delivery" : `Editar Pedido — Mesa ${editModal.table.number}`}
-              </p>
+              <p className="modal-title">{isDelivery(editModal.table) ? "🛵 Editar Pedido — Delivery" : `Editar Pedido — Mesa ${editModal.table.number}`}</p>
               <p className="modal-subtitle">Cliente: {editModal.table.clientName}</p>
               <div className="menu-list">
                 {products.map((product) => (
@@ -754,9 +544,7 @@ export default function HomePage({ activeTab, setActiveTab }) {
                     </div>
                 ))}
               </div>
-              {cartCount > 0 && (
-                  <div className="cart-summary">{cartCount} {cartCount === 1 ? "item" : "itens"} · R$ {cartTotal.toFixed(2)}</div>
-              )}
+              {cartCount > 0 && <div className="cart-summary">{cartCount} {cartCount === 1 ? "item" : "itens"} · R$ {cartTotal.toFixed(2)}</div>}
               <div className="modal-actions">
                 <button className="btn btn--gray btn--md" onClick={() => { setEditModal(null); setCart([]); }}>Cancelar</button>
                 <button className="btn btn--primary btn--md" onClick={handleSaveEdit} disabled={loading || !cartCount}>{loading ? "..." : "Salvar alterações"}</button>
@@ -764,7 +552,6 @@ export default function HomePage({ activeTab, setActiveTab }) {
             </Modal>
         )}
 
-     
         {cancelConfirm && (
             <Modal onClose={() => setCancelConfirm(null)}>
               <p className="modal-title">Cancelar pedido?</p>
@@ -775,7 +562,6 @@ export default function HomePage({ activeTab, setActiveTab }) {
             </Modal>
         )}
 
-        {/* Modal: Confirmar Exclusão */}
         {deleteConfirm && (
             <Modal onClose={() => setDeleteConfirm(null)}>
               <p className="modal-title">Excluir Mesa {deleteConfirm.number}?</p>
@@ -786,25 +572,18 @@ export default function HomePage({ activeTab, setActiveTab }) {
             </Modal>
         )}
 
-      
         {feedbackModal && (
             <Modal>
               <div className="feedback-modal">
             <span className="feedback-modal__icon">
-              {feedbackModal === "cancelado" ? "❌"
-                  : feedbackModal === "pago" ? "✅"
-                      : feedbackModal === "editado" ? "✏️"
-                          : feedbackModal === "mesclado" ? "🔀"
-                              : feedbackModal === "status" ? "🛵"
-                                  : "🎉"}
+              {feedbackModal === "cancelado" ? "❌" : feedbackModal === "pago" ? "✅"
+                  : feedbackModal === "editado" ? "✏️" : feedbackModal === "mesclado" ? "🔀"
+                      : feedbackModal === "status" ? "🛵" : "🎉"}
             </span>
                 <p className="modal-title">
-                  {feedbackModal === "cancelado" ? "Pedido cancelado!"
-                      : feedbackModal === "pago" ? "Pagamento realizado!"
-                          : feedbackModal === "editado" ? "Pedido atualizado!"
-                              : feedbackModal === "mesclado" ? "Mesas mescladas!"
-                                  : feedbackModal === "status" ? "Status atualizado!"
-                                      : "Pedido criado!"}
+                  {feedbackModal === "cancelado" ? "Pedido cancelado!" : feedbackModal === "pago" ? "Pagamento realizado!"
+                      : feedbackModal === "editado" ? "Pedido atualizado!" : feedbackModal === "mesclado" ? "Mesas mescladas!"
+                          : feedbackModal === "status" ? "Status atualizado!" : "Pedido criado!"}
                 </p>
                 <button className="btn btn--green btn--md" onClick={() => setFeedbackModal(null)}>Confirmar</button>
               </div>
