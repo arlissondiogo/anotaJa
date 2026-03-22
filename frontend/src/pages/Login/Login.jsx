@@ -91,9 +91,9 @@ export default function LoginPage({ onLogin }) {
   };
 
   const getBarColor = () => {
-    if (passwordStrength === "forte") return "#22c55e"; // verde
-    if (passwordStrength === "média") return "#facc15"; // amarelo
-    return "#ef4444"; // vermelho
+    if (passwordStrength === "forte") return "#22c55e";
+    if (passwordStrength === "média") return "#facc15";
+    return "#ef4444";
   };
 
   return (
@@ -166,7 +166,6 @@ export default function LoginPage({ onLogin }) {
             onKeyDown={handleKey}
           />
 
-          {/* 🔥 Barra de força */}
           {tab === "register" && form.password && (
             <>
               <div className="password-bar">
