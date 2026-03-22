@@ -1,7 +1,7 @@
 FROM maven:3.9-eclipse-temurin-21-alpine AS build
 WORKDIR /app
 COPY backend/ .
-RUN mvn clean package -DskipTests || (cat /root/.m2/repository && exit 1)
+RUN mvn clean package -DskipTests
 
 FROM eclipse-temurin:21-jre
 WORKDIR /app
