@@ -35,13 +35,12 @@ public class EmployeeService {
             String email,
             String password,
             Role role,
-            String requesterId  // id de quem está fazendo a requisição
+            String requesterId
     ) {
         if (repository.existsByEmail(email)) {
             throw new RuntimeException("Email já está em uso");
         }
 
-        // resolve o ownerId real: se quem criou é MANAGER, pega o ownerId dele
         String ownerId = resolveOwnerId(requesterId);
 
         userService.createEmployee(name, email, password, role, ownerId);
@@ -56,11 +55,9 @@ public class EmployeeService {
     private String resolveOwnerId(String requesterId) {
         return userRepository.findById(requesterId)
                 .map(user -> {
-                    // se for MANAGER, usa o ownerId dele (que é o dono)
                     if (user.getRole() == Role.MANAGER && user.getOwnerId() != null) {
                         return user.getOwnerId();
                     }
-                    // se for OWNER, usa o próprio id
                     return requesterId;
                 })
                 .orElse(requesterId);

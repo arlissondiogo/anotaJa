@@ -112,17 +112,15 @@ public class TableController {
 
         return repository.save(table);
     }
-    @PreAuthorize("hasAnyRole('OWNER','MANAGER')")
+    @PreAuthorize("hasAnyRole('OWNER','MANAGER','RECEPTION')")
     @PostMapping("/merge")
     public ResponseEntity<Void> mergeTables(
             @RequestBody MergeTablesRequest request
     ) {
-
         service.mergeTables(
                 request.sourceTableId(),
                 request.targetTableId()
         );
-
         return ResponseEntity.ok().build();
     }
 }

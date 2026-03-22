@@ -30,4 +30,9 @@ public class UserService {
         String hashedPassword = passwordEncoder.encode(rawPassword);
         return repository.save(new User(name, null, email, hashedPassword, role, ownerId));
     }
+
+    public User findById(String id) {
+        return repository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Usuário não encontrado"));
+    }
 }

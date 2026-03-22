@@ -33,10 +33,17 @@ public class UserController {
                 request.email(),
                 request.password()
         );
+        return ResponseEntity.status(HttpStatus.CREATED).body(UserResponse.from(user));
+    }
 
-        return ResponseEntity
-                .status(HttpStatus.CREATED)
-                .body(UserResponse.from(user));
+    @GetMapping("/me")
+    public ResponseEntity<UserResponse> me() {
+        String userId = (String) SecurityContextHolder
+                .getContext()
+                .getAuthentication()
+                .getPrincipal();
+        User user = service.findById(userId);
+        return ResponseEntity.ok(UserResponse.from(user));
     }
 
     @PreAuthorize("hasAnyRole('OWNER', 'MANAGER')")
@@ -48,7 +55,6 @@ public class UserController {
                 .getContext()
                 .getAuthentication()
                 .getPrincipal();
-
         User user = service.createEmployee(
                 request.name(),
                 request.email(),
@@ -56,9 +62,6 @@ public class UserController {
                 request.role(),
                 ownerId
         );
-
-        return ResponseEntity
-                .status(HttpStatus.CREATED)
-                .body(UserResponse.from(user));
+        return ResponseEntity.status(HttpStatus.CREATED).body(UserResponse.from(user));
     }
 }

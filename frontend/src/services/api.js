@@ -7,6 +7,27 @@ const authHeaders = () => ({
   Authorization: `Bearer ${getToken()}`,
 });
 
+export function getRole() {
+  const token = getToken();
+  if (!token) return null;
+  try {
+    const payload = JSON.parse(atob(token.split(".")[1]));
+    return payload.role;
+  } catch {
+    return null;
+  }
+}
+
+export function getUserInfo() {
+  const token = getToken();
+  if (!token) return null;
+  try {
+    return JSON.parse(atob(token.split(".")[1]));
+  } catch {
+    return null;
+  }
+}
+
 export async function login(email, password) {
   const res = await fetch(`${BASE_URL}/auth/login`, {
     method: "POST",
@@ -24,6 +45,12 @@ export async function registerUser(data) {
     body: JSON.stringify(data),
   });
   if (!res.ok) throw new Error("Erro ao criar conta. Email já em uso?");
+  return res.json();
+}
+
+export async function getMe() {
+  const res = await fetch(`${BASE_URL}/users/me`, { headers: authHeaders() });
+  if (!res.ok) throw new Error("Erro ao buscar perfil");
   return res.json();
 }
 

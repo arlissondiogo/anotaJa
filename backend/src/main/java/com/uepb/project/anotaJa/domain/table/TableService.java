@@ -39,65 +39,53 @@ public class TableService {
             throw new RuntimeException("Mesa origem está vazia");
         }
 
-        // Busca pedidos ativos das duas mesas
         Order sourceOrder = orderRepository
-                .findFirstByTableIdAndPaidFalseAndCanceledFalse (sourceId)
+                .findFirstByTableIdAndPaidFalseAndCanceledFalse(sourceId)
                 .orElse(null);
 
         Order targetOrder = orderRepository
-                .findFirstByTableIdAndPaidFalseAndCanceledFalse (targetId)
+                .findFirstByTableIdAndPaidFalseAndCanceledFalse(targetId)
                 .orElse(null);
 
         if (sourceOrder != null) {
             if (targetOrder != null) {
-                // Marca os itens da mesa origem com a nota de origem
                 List<OrderItem> mergedItems = new ArrayList<>();
 
-                // Adiciona itens da mesa destino com nota
                 for (OrderItem item : targetOrder.getItems()) {
-                    OrderItem tagged = new OrderItem(
+                    mergedItems.add(new OrderItem(
                             item.getProductId(),
                             "[Mesa " + target.getNumber() + "] " + item.getName(),
                             item.getPrice(),
                             item.getQuantity()
-                    );
-                    mergedItems.add(tagged);
+                    ));
                 }
 
-                // Adiciona itens da mesa origem com nota
                 for (OrderItem item : sourceOrder.getItems()) {
-                    OrderItem tagged = new OrderItem(
+                    mergedItems.add(new OrderItem(
                             item.getProductId(),
                             "[Mesa " + source.getNumber() + "] " + item.getName(),
                             item.getPrice(),
                             item.getQuantity()
-                    );
-                    mergedItems.add(tagged);
+                    ));
                 }
 
-                // Calcula novo total
                 double newTotal = mergedItems.stream()
                         .mapToDouble(i -> i.getPrice() * i.getQuantity())
                         .sum();
 
-                // Atualiza pedido da mesa destino
                 targetOrder.setItems(mergedItems);
                 targetOrder.setTotal(newTotal);
                 orderRepository.save(targetOrder);
 
-                // Cancela pedido da mesa origem
-                sourceOrder.setCanceled(true);
-                orderRepository.save(sourceOrder);
+                orderRepository.delete(sourceOrder);
 
             } else {
-                // Mesa destino não tem pedido — move o pedido da origem
                 sourceOrder.setTableId(targetId);
                 sourceOrder.setClientName(target.getClientName());
                 orderRepository.save(sourceOrder);
             }
         }
 
-        // Deleta a mesa origem
         repository.delete(source);
     }
 }

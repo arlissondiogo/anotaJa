@@ -11,7 +11,7 @@ public class UserDocumentMapper {
         doc.setBusinessName(user.getBusinessName());
         doc.setEmail(user.getEmail());
         doc.setPassword(user.getPassword());
-        doc.setOwnerId(user.getOwnerId()); // novo
+        doc.setOwnerId(user.getOwnerId());
         if (user.getRole() != null) {
             doc.setRole(user.getRole().name());
         }
@@ -30,7 +30,7 @@ public class UserDocumentMapper {
                 doc.getEmail(),
                 doc.getPassword(),
                 role,
-                doc.getOwnerId() // novo
+                doc.getOwnerId()
         );
     }
 }
