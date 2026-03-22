@@ -1,25 +1,21 @@
-*{
-    margin: 0;
-    padding: 0;
-    font-family: Arial, Helvetica, sans-serif;
-    box-sizing: border-box;
+.app {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
 }
 
-.App{
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    min-height: 100vh;
-    background: linear-gradient(to bottom, #fff9c4, #fbc02d);
-
+.main-content {
+  flex: 1;
+  padding-top: 60px;
 }
 
-.logo{
-    width: 500px;
-    height: 285px;
-    margin-top: 80px;
+.main-content--with-tabs {
+  padding-top: 106px;
 }
 
-.page{
-    display: flex;
+.overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.4);
+  z-index: 99;
 }

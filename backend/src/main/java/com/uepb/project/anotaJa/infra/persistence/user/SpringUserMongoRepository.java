@@ -9,4 +9,5 @@ public interface SpringUserMongoRepository
 
     boolean existsByEmail(String email);
     Optional<UserDocument> findByEmail(String email);
+    Optional<UserDocument> findUserDocumentById(String id);
 }

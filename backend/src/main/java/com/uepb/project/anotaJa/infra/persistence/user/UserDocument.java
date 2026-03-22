@@ -15,4 +15,6 @@ public class UserDocument {
     private String businessName;
     private String email;
     private String password;
+    private String role;
+    private String ownerId;
 }
