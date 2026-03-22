@@ -1,7 +1,7 @@
 FROM maven:3.9-eclipse-temurin-21 AS build
 WORKDIR /app
 COPY backend/ .
-ARG CACHEBUST=1
+ARG CACHEBUST=3
 RUN mvn clean package -DskipTests
 RUN ls target/
 
