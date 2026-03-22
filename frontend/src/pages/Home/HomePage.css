@@ -91,11 +91,18 @@
   background: #fafafa;
   transition: border-color 0.15s;
   margin-bottom: 4px;
+  box-sizing: border-box;
 }
 
 .modal-input:focus {
   border-color: #e8c547;
   background: #fff;
+}
+
+.modal-textarea {
+  resize: vertical;
+  min-height: 72px;
+  line-height: 1.5;
 }
 
 .order-items {
@@ -118,6 +125,21 @@
   font-size: 15px;
   padding-top: 10px;
   color: #222;
+}
+
+.order-total--fee {
+  font-weight: 600;
+  font-size: 13px;
+  color: #888;
+  padding-top: 4px;
+}
+
+.order-total--grand {
+  font-size: 16px;
+  color: #e05a3a;
+  border-top: 2px solid #f0e8dc;
+  margin-top: 4px;
+  padding-top: 8px;
 }
 
 .menu-list {
@@ -162,6 +184,7 @@
 .feedback-modal__icon {
   font-size: 52px;
 }
+
 .table-wrapper {
   position: relative;
 }
@@ -186,6 +209,7 @@
 .delete-table-btn:hover {
   background: #c74427;
 }
+
 .menu-item__img {
   width: 56px;
   height: 56px;
@@ -205,6 +229,7 @@
   flex-direction: column;
   gap: 2px;
 }
+
 .menu-item {
   display: flex;
   align-items: center;
@@ -216,6 +241,7 @@
   align-items: center;
   gap: 8px;
 }
+
 .add-delivery-fab {
   position: fixed;
   bottom: 18px;
@@ -235,10 +261,12 @@
     transform 0.15s,
     opacity 0.15s;
 }
+
 .add-delivery-fab:hover {
   opacity: 0.9;
   transform: scale(1.08);
 }
+
 .merge-table-fab {
   position: fixed;
   bottom: 18px;
@@ -256,14 +284,94 @@
   box-shadow: 0 4px 16px rgba(124, 106, 245, 0.4);
   transition: transform 0.15s, opacity 0.15s;
 }
+
 .merge-table-fab:hover {
   opacity: 0.9;
   transform: scale(1.08);
 }
+
 .modal-label {
   font-size: 12px;
   font-weight: 700;
   color: #888;
   margin-bottom: 4px;
   display: block;
+}
+
+.delivery-status-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 4px;
+}
+
+.delivery-status-btn {
+  padding: 6px 12px;
+  border-radius: 20px;
+  border: 1.5px solid #e8d8c0;
+  background: #fafafa;
+  color: #666;
+  font-size: 12px;
+  font-weight: 700;
+  font-family: inherit;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+  white-space: nowrap;
+}
+
+.delivery-status-btn:hover {
+  border-color: #e8c547;
+  color: #333;
+}
+
+.delivery-status-btn--active {
+  background: #e8c547;
+  color: #fff;
+  border-color: #e8c547;
+}
+
+.delivery-info-block {
+  background: #fffbf0;
+  border: 1.5px solid #f0e8dc;
+  border-radius: 12px;
+  padding: 12px 14px;
+  margin-bottom: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.delivery-info-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  font-size: 13px;
+}
+
+.delivery-info-label {
+  font-weight: 700;
+  color: #aaa;
+  min-width: 90px;
+  flex-shrink: 0;
+}
+
+.delivery-info-value {
+  color: #444;
+  word-break: break-word;
+}
+
+.delivery-status-editor {
+  margin-top: 8px;
+  padding-top: 10px;
+  border-top: 1px dotted #e8d8c0;
+}
+
+.delivery-status-save {
+  margin-top: 8px;
+  width: 100%;
+}
+
+.btn--sm {
+  padding: 7px 16px;
+  font-size: 12px;
 }

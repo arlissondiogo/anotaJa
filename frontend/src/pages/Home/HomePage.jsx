@@ -22,6 +22,12 @@ import "./HomePage.css";
 import "../../components/ProductCard/ProductCard.css";
 import "../../components/Modal/Modal.css";
 
+const DELIVERY_STATUS_LABELS = {
+  WAITING: "⏳ Aguardando",
+  OUT_FOR_DELIVERY: "🛵 Saiu pra entrega",
+  DELIVERED: "✅ Entregue",
+};
+
 export default function HomePage({ activeTab, setActiveTab }) {
   const [tables, setTables] = useState([]);
   const [products, setProducts] = useState([]);
@@ -38,6 +44,15 @@ export default function HomePage({ activeTab, setActiveTab }) {
   const [mergeModal, setMergeModal] = useState(false);
   const [mergeSource, setMergeSource] = useState("");
   const [mergeTarget, setMergeTarget] = useState("");
+
+  // Delivery extra fields
+  const [deliveryAddress, setDeliveryAddress] = useState("");
+  const [deliveryPhone, setDeliveryPhone] = useState("");
+  const [deliveryFee, setDeliveryFee] = useState("");
+  const [deliveryNotes, setDeliveryNotes] = useState("");
+  const [deliveryStatus, setDeliveryStatus] = useState("WAITING");
+  // For editing delivery status/info in order modal
+  const [deliveryStatusEdit, setDeliveryStatusEdit] = useState("WAITING");
 
   const [clientName, setClientName] = useState("");
   const [deliveryClientName, setDeliveryClientName] = useState("");
@@ -92,15 +107,30 @@ export default function HomePage({ activeTab, setActiveTab }) {
     }
   };
 
+  const resetDeliveryFields = () => {
+    setDeliveryClientName("");
+    setDeliveryAddress("");
+    setDeliveryPhone("");
+    setDeliveryFee("");
+    setDeliveryNotes("");
+    setDeliveryStatus("WAITING");
+  };
+
   const handleAddDelivery = async () => {
     if (!deliveryClientName.trim()) return;
     setLoading(true);
     try {
       const num = Date.now() % 100000;
       const newTable = await createTable(num);
-      await openDelivery(newTable.id, deliveryClientName);
+      await openDelivery(newTable.id, deliveryClientName, {
+        address: deliveryAddress,
+        phone: deliveryPhone,
+        fee: deliveryFee ? parseFloat(deliveryFee) : 0,
+        notes: deliveryNotes,
+        deliveryStatus: deliveryStatus,
+      });
       setAddDeliveryModal(false);
-      setDeliveryClientName("");
+      resetDeliveryFields();
       setActiveTab("DELIVERY");
       loadAll();
     } catch (err) {
@@ -117,6 +147,10 @@ export default function HomePage({ activeTab, setActiveTab }) {
     }
     try {
       const order = await getOrderByTable(table.id);
+      // Pre-fill delivery status edit if it's a delivery
+      if (table.status === "DELIVERY") {
+        setDeliveryStatusEdit(table.deliveryStatus || "WAITING");
+      }
       setOrderModal({ order, table });
     } catch (err) {
       alert(err.message);
@@ -201,6 +235,29 @@ export default function HomePage({ activeTab, setActiveTab }) {
         setFeedbackModal(null);
         loadAll();
       }, 2000);
+    } catch (err) {
+      alert(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleUpdateDeliveryStatus = async () => {
+    if (!orderModal) return;
+    setLoading(true);
+    try {
+      await updateOrder(orderModal.order?.id, {
+        items: orderModal.order?.items,
+        total: orderModal.order?.total,
+        deliveryStatus: deliveryStatusEdit,
+      });
+      setOrderModal((prev) => ({
+        ...prev,
+        table: { ...prev.table, deliveryStatus: deliveryStatusEdit },
+      }));
+      setFeedbackModal("status");
+      setTimeout(() => setFeedbackModal(null), 2000);
+      loadAll();
     } catch (err) {
       alert(err.message);
     } finally {
@@ -379,27 +436,80 @@ export default function HomePage({ activeTab, setActiveTab }) {
             </Modal>
         )}
 
-        {/* Modal: Novo Delivery */}
+        
         {addDeliveryModal && (
-            <Modal onClose={() => { setAddDeliveryModal(false); setDeliveryClientName(""); }}>
+            <Modal onClose={() => { setAddDeliveryModal(false); resetDeliveryFields(); }}>
               <p className="modal-title">🛵 Novo Delivery</p>
-              <p className="modal-subtitle">Informe o nome do cliente</p>
+              <p className="modal-subtitle">Preencha os dados do pedido</p>
+
+              <label className="modal-label">Nome do cliente *</label>
               <input
                   className="modal-input"
                   placeholder="Nome do cliente"
                   value={deliveryClientName}
                   onChange={(e) => setDeliveryClientName(e.target.value)}
-                  onKeyDown={(e) => e.key === "Enter" && handleAddDelivery()}
                   autoFocus
               />
+
+              <label className="modal-label" style={{ marginTop: 10 }}>Telefone</label>
+              <input
+                  className="modal-input"
+                  placeholder="(00) 00000-0000"
+                  type="tel"
+                  value={deliveryPhone}
+                  onChange={(e) => setDeliveryPhone(e.target.value)}
+              />
+
+              <label className="modal-label" style={{ marginTop: 10 }}>Endereço de entrega</label>
+              <input
+                  className="modal-input"
+                  placeholder="Rua, número, bairro..."
+                  value={deliveryAddress}
+                  onChange={(e) => setDeliveryAddress(e.target.value)}
+              />
+
+              <label className="modal-label" style={{ marginTop: 10 }}>Taxa de entrega (R$)</label>
+              <input
+                  className="modal-input"
+                  placeholder="0,00"
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  value={deliveryFee}
+                  onChange={(e) => setDeliveryFee(e.target.value)}
+              />
+
+              <label className="modal-label" style={{ marginTop: 10 }}>Status do delivery</label>
+              <div className="delivery-status-group">
+                {Object.entries(DELIVERY_STATUS_LABELS).map(([key, label]) => (
+                    <button
+                        key={key}
+                        type="button"
+                        className={`delivery-status-btn${deliveryStatus === key ? " delivery-status-btn--active" : ""}`}
+                        onClick={() => setDeliveryStatus(key)}
+                    >
+                      {label}
+                    </button>
+                ))}
+              </div>
+
+              <label className="modal-label" style={{ marginTop: 10 }}>Observações</label>
+              <textarea
+                  className="modal-input modal-textarea"
+                  placeholder="Sem cebola, alergia a amendoim..."
+                  value={deliveryNotes}
+                  onChange={(e) => setDeliveryNotes(e.target.value)}
+                  rows={3}
+              />
+
               <div className="modal-actions">
-                <button className="btn btn--gray btn--md" onClick={() => { setAddDeliveryModal(false); setDeliveryClientName(""); }}>Cancelar</button>
+                <button className="btn btn--gray btn--md" onClick={() => { setAddDeliveryModal(false); resetDeliveryFields(); }}>Cancelar</button>
                 <button className="btn btn--primary btn--md" onClick={handleAddDelivery} disabled={loading}>{loading ? "..." : "Criar delivery"}</button>
               </div>
             </Modal>
         )}
 
-        {/* Modal: Abrir Mesa */}
+        
         {openTableModal && (
             <Modal onClose={() => { setOpenTableModal(null); setClientName(""); }}>
               <p className="modal-title">Abrir Mesa {openTableModal.number}</p>
@@ -470,13 +580,69 @@ export default function HomePage({ activeTab, setActiveTab }) {
             </Modal>
         )}
 
-        {/* Modal: Pedido */}
+ 
         {orderModal && (
             <Modal onClose={() => setOrderModal(null)}>
               <p className="modal-title">
                 {isDelivery(orderModal.table) ? "🛵 Delivery" : `Mesa ${orderModal.table.number}`}
               </p>
               <p className="modal-subtitle">Cliente: {orderModal.table.clientName}</p>
+
+              {/* Delivery info block */}
+              {isDelivery(orderModal.table) && (
+                  <div className="delivery-info-block">
+                    {orderModal.table.phone && (
+                        <div className="delivery-info-row">
+                          <span className="delivery-info-label">📞 Telefone</span>
+                          <span className="delivery-info-value">{orderModal.table.phone}</span>
+                        </div>
+                    )}
+                    {orderModal.table.address && (
+                        <div className="delivery-info-row">
+                          <span className="delivery-info-label">📍 Endereço</span>
+                          <span className="delivery-info-value">{orderModal.table.address}</span>
+                        </div>
+                    )}
+                    {orderModal.table.fee > 0 && (
+                        <div className="delivery-info-row">
+                          <span className="delivery-info-label">💰 Taxa</span>
+                          <span className="delivery-info-value">R$ {parseFloat(orderModal.table.fee).toFixed(2)}</span>
+                        </div>
+                    )}
+                    {orderModal.table.notes && (
+                        <div className="delivery-info-row">
+                          <span className="delivery-info-label">📝 Obs.</span>
+                          <span className="delivery-info-value">{orderModal.table.notes}</span>
+                        </div>
+                    )}
+
+                    {/* Status editor */}
+                    <div className="delivery-status-editor">
+                      <span className="delivery-info-label" style={{ marginBottom: 6, display: "block" }}>Status do delivery</span>
+                      <div className="delivery-status-group">
+                        {Object.entries(DELIVERY_STATUS_LABELS).map(([key, label]) => (
+                            <button
+                                key={key}
+                                type="button"
+                                className={`delivery-status-btn${deliveryStatusEdit === key ? " delivery-status-btn--active" : ""}`}
+                                onClick={() => setDeliveryStatusEdit(key)}
+                            >
+                              {label}
+                            </button>
+                        ))}
+                      </div>
+                      {deliveryStatusEdit !== (orderModal.table.deliveryStatus || "WAITING") && (
+                          <button
+                              className="btn btn--primary btn--sm delivery-status-save"
+                              onClick={handleUpdateDeliveryStatus}
+                              disabled={loading}
+                          >
+                            {loading ? "..." : "Salvar status"}
+                          </button>
+                      )}
+                    </div>
+                  </div>
+              )}
 
               {orderModal.order && orderModal.order.items?.length > 0 && (
                   <div className="order-items">
@@ -487,7 +653,22 @@ export default function HomePage({ activeTab, setActiveTab }) {
                           <span className="order-item__price">R$ {(item.price * item.quantity).toFixed(2)}</span>
                         </div>
                     ))}
-                    <div className="order-total">Total: R$ {orderModal.order.total?.toFixed(2)}</div>
+                    <div className="order-total">
+                      <span>Subtotal</span>
+                      <span>R$ {orderModal.order.total?.toFixed(2)}</span>
+                    </div>
+                    {isDelivery(orderModal.table) && orderModal.table.fee > 0 && (
+                        <div className="order-total order-total--fee">
+                          <span>Taxa de entrega</span>
+                          <span>R$ {parseFloat(orderModal.table.fee).toFixed(2)}</span>
+                        </div>
+                    )}
+                    {isDelivery(orderModal.table) && orderModal.table.fee > 0 && (
+                        <div className="order-total order-total--grand">
+                          <span>Total geral</span>
+                          <span>R$ {(orderModal.order.total + parseFloat(orderModal.table.fee || 0)).toFixed(2)}</span>
+                        </div>
+                    )}
                   </div>
               )}
 
@@ -513,7 +694,7 @@ export default function HomePage({ activeTab, setActiveTab }) {
             </Modal>
         )}
 
-        {/* Modal: Cardápio */}
+
         {menuModal && (
             <Modal onClose={() => { setMenuModal(null); setCart([]); }}>
               <p className="modal-title">
@@ -548,7 +729,7 @@ export default function HomePage({ activeTab, setActiveTab }) {
             </Modal>
         )}
 
-        {/* Modal: Editar Pedido */}
+   
         {editModal && (
             <Modal onClose={() => { setEditModal(null); setCart([]); }}>
               <p className="modal-title">
@@ -583,7 +764,7 @@ export default function HomePage({ activeTab, setActiveTab }) {
             </Modal>
         )}
 
-        {/* Modal: Confirmar Cancelamento */}
+     
         {cancelConfirm && (
             <Modal onClose={() => setCancelConfirm(null)}>
               <p className="modal-title">Cancelar pedido?</p>
@@ -605,7 +786,7 @@ export default function HomePage({ activeTab, setActiveTab }) {
             </Modal>
         )}
 
-        {/* Modal: Feedback */}
+      
         {feedbackModal && (
             <Modal>
               <div className="feedback-modal">
@@ -614,14 +795,16 @@ export default function HomePage({ activeTab, setActiveTab }) {
                   : feedbackModal === "pago" ? "✅"
                       : feedbackModal === "editado" ? "✏️"
                           : feedbackModal === "mesclado" ? "🔀"
-                              : "🎉"}
+                              : feedbackModal === "status" ? "🛵"
+                                  : "🎉"}
             </span>
                 <p className="modal-title">
                   {feedbackModal === "cancelado" ? "Pedido cancelado!"
                       : feedbackModal === "pago" ? "Pagamento realizado!"
                           : feedbackModal === "editado" ? "Pedido atualizado!"
                               : feedbackModal === "mesclado" ? "Mesas mescladas!"
-                                  : "Pedido criado!"}
+                                  : feedbackModal === "status" ? "Status atualizado!"
+                                      : "Pedido criado!"}
                 </p>
                 <button className="btn btn--green btn--md" onClick={() => setFeedbackModal(null)}>Confirmar</button>
               </div>
