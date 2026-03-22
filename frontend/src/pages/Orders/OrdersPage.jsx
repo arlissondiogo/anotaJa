@@ -1,116 +1,119 @@
 import { useState, useEffect, useCallback } from "react";
 import Modal from "../../components/Modal/Modal";
-import { getTables, getOrderByTable } from "../../services/api";
+import {
+  getOrdersRecentes,
+  getOrdersCancelados,
+  getOrdersFinalizados,
+} from "../../services/api";
 import "./OrdersPage.css";
 import "../../components/Modal/Modal.css";
 
 const FILTER_CONFIG = {
-  recent: {
-    label: "Pedidos Recentes",
-    test: (o) => o && !o.paid && !o.canceled,
-  },
-  canceled: { label: "Pedidos Cancelados", test: (o) => o && o.canceled },
-  finished: { label: "Pedidos Finalizados", test: (o) => o && o.paid },
+  recent:   { label: "Pedidos Recentes",    fetch: getOrdersRecentes },
+  canceled: { label: "Pedidos Cancelados",  fetch: getOrdersCancelados },
+  finished: { label: "Pedidos Finalizados", fetch: getOrdersFinalizados },
+};
+
+const statusColor = (order) => {
+  if (order?.canceled) return "#E05A3A";
+  if (order?.paid)     return "#4CAF50";
+  return "#E8C547";
+};
+
+const statusLabel = (order) => {
+  if (order?.canceled) return "Cancelado";
+  if (order?.paid)     return "Pago";
+  return "Em aberto";
 };
 
 export default function OrdersPage({ filter }) {
-  const [entries, setEntries] = useState([]);
+  const [orders, setOrders] = useState([]);
   const [selected, setSelected] = useState(null);
-  const [activeTab, setActiveTab] = useState("all");
-
   const config = FILTER_CONFIG[filter];
 
   const load = useCallback(async () => {
-    const tables = await getTables();
-    const occupied = tables.filter((t) => t.status !== "AVAILABLE");
-    const results = await Promise.all(
-      occupied.map(async (t) => {
-        const order = await getOrderByTable(t.id);
-        return { order, table: t };
-      }),
-    );
-    setEntries(results.filter((e) => config.test(e.order)));
-  }, [filter, config]);
+    try {
+      const data = await config.fetch();
+      setOrders(data);
+    } catch (err) {
+      console.error(err.message);
+    }
+  }, [filter]);
 
   useEffect(() => {
     load();
   }, [load]);
 
-  const statusColor = (order) => {
-    if (order?.canceled) return "#E05A3A";
-    if (order?.paid) return "#4CAF50";
-    return "#E8C547";
-  };
-
-  const statusLabel = (order) => {
-    if (order?.canceled) return "Cancelado";
-    if (order?.paid) return "Pago";
-    return "Em aberto";
-  };
-
   return (
-    <div className="orders-page">
-      <h2 className="orders-title">{config.label}</h2>
+      <div className="orders-page">
+        <h2 className="orders-title">{config.label}</h2>
 
-      <div className="orders-grid">
-        {entries.map(({ order, table }) => (
-          <div
-            key={table.id}
-            className="order-card"
-            style={{ borderColor: statusColor(order) }}
-            onClick={() => setSelected({ order, table })}
-          >
-            <span className="order-card__icon">📋</span>
-            <p className="order-card__id">#{order?.id?.slice(-3)}</p>
-            <p className="order-card__client">{table.clientName}</p>
-            <p className="order-card__mesa">Mesa {table.number}</p>
-            <span
-              className="order-card__status"
-              style={{ color: statusColor(order) }}
-            >
+        <div className="orders-grid">
+          {orders.map((order) => (
+              <div
+                  key={order.id}
+                  className="order-card"
+                  style={{ borderColor: statusColor(order) }}
+                  onClick={() => setSelected(order)}
+              >
+                <span className="order-card__icon">📋</span>
+                <p className="order-card__id">#{order.id?.slice(-4)}</p>
+                <p className="order-card__client">{order.clientName}</p>
+                <span
+                    className="order-card__status"
+                    style={{ color: statusColor(order) }}
+                >
               {statusLabel(order)}
             </span>
-          </div>
-        ))}
-        {entries.length === 0 && (
-          <p className="orders-empty">Nenhum pedido encontrado.</p>
+                <p className="order-card__total">
+                  R$ {order.total?.toFixed(2)}
+                </p>
+              </div>
+          ))}
+          {orders.length === 0 && (
+              <p className="orders-empty">Nenhum pedido encontrado.</p>
+          )}
+        </div>
+
+        {selected && (
+            <Modal onClose={() => setSelected(null)}>
+              <p className="modal-title">
+                Pedido #{selected.id?.slice(-4)}
+              </p>
+              <p className="modal-subtitle">Cliente: {selected.clientName}</p>
+
+              <div className="order-items">
+                {selected.items?.map((item, i) => (
+                    <div key={i} className="order-item">
+                      <span className="order-item__name">{item.name}</span>
+                      <span className="order-item__qty">x{item.quantity}</span>
+                      <span className="order-item__price">
+                  R$ {(item.price * item.quantity).toFixed(2)}
+                </span>
+                    </div>
+                ))}
+                <div className="order-total">
+                  Total: R$ {selected.total?.toFixed(2)}
+                </div>
+              </div>
+
+              <div
+                  className="order-status-badge"
+                  style={{
+                    background: statusColor(selected) + "22",
+                    color: statusColor(selected),
+                    padding: "6px 14px",
+                    borderRadius: "20px",
+                    fontWeight: 800,
+                    fontSize: 13,
+                    display: "inline-block",
+                    marginTop: 12,
+                  }}
+              >
+                {statusLabel(selected)}
+              </div>
+            </Modal>
         )}
       </div>
-
-      {selected && (
-        <Modal onClose={() => setSelected(null)} borderColor="#5CA8E0">
-          <p className="modal-title">
-            Pedido #{selected.order?.id?.slice(-3)} —{" "}
-            {selected.table.clientName}
-          </p>
-          <p className="modal-subtitle">Mesa {selected.table.number}</p>
-
-          <div className="order-items">
-            {selected.order?.items?.map((item, i) => (
-              <div key={i} className="order-item">
-                <span>
-                  {item.productName} ({item.quantity} un)
-                </span>
-                <span>R$ {(item.unitPrice * item.quantity).toFixed(2)}</span>
-              </div>
-            ))}
-            <div className="order-total">
-              <span>Total</span>
-              <span>R$ {selected.order?.total?.toFixed(2)}</span>
-            </div>
-          </div>
-
-          <div
-            className="order-status-badge"
-            style={{
-              background: statusColor(selected.order) + "22",
-              color: statusColor(selected.order),
-            }}
-          >
-            {statusLabel(selected.order)}
-          </div>
-        </Modal>
-      )}
-    </div>
   );
 }

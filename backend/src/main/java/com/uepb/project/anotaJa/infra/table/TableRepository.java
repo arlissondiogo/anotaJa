@@ -9,5 +9,6 @@ import java.util.List;
 public interface TableRepository extends MongoRepository<Table, String> {
 
     List<Table> findByStatus(TableStatus status);
+    List<Table> findByOwnerId(String ownerId);
 
 }

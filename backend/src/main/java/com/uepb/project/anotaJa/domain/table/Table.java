@@ -21,4 +21,6 @@ public class Table {
 
     private TableStatus status;
 
+    private String ownerId;
+
 }

@@ -15,24 +15,24 @@ public class UserService {
         this.passwordEncoder = passwordEncoder;
     }
 
-    public User register(String ownerName,
-                         String businessName,
-                         String email,
-                         String rawPassword) {
-
+    public User register(String ownerName, String businessName, String email, String rawPassword) {
         if (repository.existsByEmail(email)) {
             throw new EmailAlreadyInUseException();
         }
-
         String hashedPassword = passwordEncoder.encode(rawPassword);
+        return repository.save(new User(ownerName, businessName, email, hashedPassword, Role.OWNER));
+    }
 
-        User user = new User(
-                ownerName,
-                businessName,
-                email,
-                hashedPassword
-        );
+    public User createEmployee(String name, String email, String rawPassword, Role role, String ownerId) {
+        if (repository.existsByEmail(email)) {
+            throw new EmailAlreadyInUseException();
+        }
+        String hashedPassword = passwordEncoder.encode(rawPassword);
+        return repository.save(new User(name, null, email, hashedPassword, role, ownerId));
+    }
 
-        return repository.save(user);
+    public User findById(String id) {
+        return repository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Usuário não encontrado"));
     }
 }

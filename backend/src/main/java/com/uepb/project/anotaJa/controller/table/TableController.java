@@ -1,8 +1,13 @@
 package com.uepb.project.anotaJa.controller.table;
 
+import com.uepb.project.anotaJa.controller.table.dto.MergeTablesRequest;
 import com.uepb.project.anotaJa.domain.table.Table;
+import com.uepb.project.anotaJa.domain.table.TableService;
 import com.uepb.project.anotaJa.domain.table.TableStatus;
 import com.uepb.project.anotaJa.infra.table.TableRepository;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -12,14 +17,25 @@ import java.util.List;
 public class TableController {
 
     private final TableRepository repository;
+    private final TableService service;
 
-    public TableController(TableRepository repository) {
+    public TableController(
+            TableRepository repository,
+            TableService service
+    ) {
         this.repository = repository;
+        this.service = service;
     }
 
     @PostMapping
     public Table create(@RequestBody Table table){
 
+        String ownerId = (String) SecurityContextHolder
+                .getContext()
+                .getAuthentication()
+                .getPrincipal();
+
+        table.setOwnerId(ownerId);
         table.setStatus(TableStatus.AVAILABLE);
 
         return repository.save(table);
@@ -28,7 +44,12 @@ public class TableController {
     @GetMapping
     public List<Table> list(){
 
-        return repository.findAll();
+        String ownerId = (String) SecurityContextHolder
+                .getContext()
+                .getAuthentication()
+                .getPrincipal();
+
+        return repository.findByOwnerId(ownerId);
     }
 
     @GetMapping("/available")
@@ -90,5 +111,16 @@ public class TableController {
         table.setStatus(TableStatus.DELIVERY);
 
         return repository.save(table);
+    }
+    @PreAuthorize("hasAnyRole('OWNER','MANAGER','RECEPTION')")
+    @PostMapping("/merge")
+    public ResponseEntity<Void> mergeTables(
+            @RequestBody MergeTablesRequest request
+    ) {
+        service.mergeTables(
+                request.sourceTableId(),
+                request.targetTableId()
+        );
+        return ResponseEntity.ok().build();
     }
 }
