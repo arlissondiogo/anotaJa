@@ -105,6 +105,31 @@ export async function mergeTables(sourceTableId, targetTableId) {
   if (!res.ok) throw new Error("Erro ao mesclar mesas");
 }
 
+export async function openDelivery(id, clientName, { address, phone, fee, notes, deliveryStatus } = {}) {
+  const res = await fetch(
+      `${BASE_URL}/tables/${id}/open-delivery?clientName=${encodeURIComponent(clientName)}`,
+      {
+        method: "POST",
+        headers: authHeaders(),
+        body: JSON.stringify({ address, phone, fee, notes, deliveryStatus }),
+      }
+  );
+  if (!res.ok) throw new Error("Erro ao abrir delivery");
+  return res.json();
+}
+
+export async function updateDeliveryStatus(id, deliveryStatus) {
+  const res = await fetch(
+      `${BASE_URL}/tables/${id}/delivery-status?deliveryStatus=${encodeURIComponent(deliveryStatus)}`,
+      {
+        method: "PATCH",
+        headers: authHeaders(),
+      }
+  );
+  if (!res.ok) throw new Error("Erro ao atualizar status do delivery");
+  return res.json();
+}
+
 export async function getProducts() {
   const res = await fetch(`${BASE_URL}/products`, { headers: authHeaders() });
   if (!res.ok) throw new Error("Erro ao buscar produtos");
@@ -202,15 +227,6 @@ export async function cancelOrder(id) {
     headers: authHeaders(),
   });
   if (!res.ok) throw new Error("Erro ao cancelar pedido");
-  return res.json();
-}
-
-export async function openDelivery(id, clientName) {
-  const res = await fetch(
-      `${BASE_URL}/tables/${id}/open-delivery?clientName=${encodeURIComponent(clientName)}`,
-      { method: "POST", headers: authHeaders() }
-  );
-  if (!res.ok) throw new Error("Erro ao abrir delivery");
   return res.json();
 }
 
