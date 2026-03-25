@@ -1,6 +1,6 @@
 # AnotaJá 🍽️
 
-Sistema de gerenciamento de pedidos para restaurantes e estabelecimentos de alimentação, com suporte a mesas, delivery e controle por perfis de acesso.
+Sistema de gerenciamento de pedidos para restaurantes e estabelecimentos de alimentação, com suporte a mesas, delivery e controle por perfis de acesso!
 
 ---
 
@@ -295,7 +295,7 @@ anotaJá/
             └── api.js         # Funções de comunicação com o backend
 ```
 
----
+--- 
 
 ## Licença
 
